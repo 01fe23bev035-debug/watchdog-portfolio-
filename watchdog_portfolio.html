@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watchdog Timer — RTL Design & Verification Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0b0f1a;
+    --surface:   #111827;
+    --border:    #1e2d45;
+    --accent:    #00d4ff;
+    --accent2:   #7c3aed;
+    --pass:      #10b981;
+    --warn:      #f59e0b;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'Inter', sans-serif;
+    --display:   'Syne', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 3rem;
+    background: rgba(11,15,26,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* HERO — PAGE 1 */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8rem 3rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+  .hero-glow {
+    position: absolute;
+    top: 20%; left: 60%;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 32px; height: 1px;
+    background: var(--accent);
+  }
+  .hero-title {
+    font-family: var(--display);
+    font-size: clamp(3rem, 7vw, 6.5rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    max-width: 14ch;
+    margin-bottom: 2rem;
+  }
+  .hero-title .accent-word { color: var(--accent); }
+  .hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 52ch;
+    margin-bottom: 3rem;
+    line-height: 1.75;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--pass);
+  }
+  .stat-value.blue { color: var(--accent); }
+  .stat-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    font-size: 0.8rem;
+    font-family: var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 3px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 600;
+    border: none;
+  }
+  .btn-primary:hover { background: #33ddff; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* SECTION COMMONS */
+  section { padding: 5rem 3rem; }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+  .section-title {
+    font-family: var(--display);
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+  .section-desc {
+    color: var(--muted);
+    max-width: 60ch;
+    margin-bottom: 3.5rem;
+    line-height: 1.75;
+  }
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+    margin: 0 3rem;
+  }
+
+  /* PAGE 2 — ARCHITECTURE */
+  #architecture { background: var(--bg); }
+  .arch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+  .arch-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .arch-card:hover { border-color: var(--accent); }
+  .arch-card::before {
+    content: attr(data-num);
+    position: absolute;
+    top: 1rem; right: 1.5rem;
+    font-family: var(--mono);
+    font-size: 3rem;
+    font-weight: 600;
+    color: rgba(0,212,255,0.06);
+    line-height: 1;
+  }
+  .arch-card-icon {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .arch-card-title {
+    font-family: var(--display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .arch-card-text { font-size: 0.875rem; color: var(--muted); line-height: 1.7; }
+
+  .port-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+  }
+  .port-table th {
+    text-align: left;
+    padding: 0.6rem 1rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .port-table td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .port-table tr:last-child td { border-bottom: none; }
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 3px;
+    font-size: 0.72rem;
+    font-family: var(--mono);
+    font-weight: 600;
+  }
+  .badge-in  { background: rgba(0,212,255,0.12); color: var(--accent); }
+  .badge-out { background: rgba(124,58,237,0.15); color: #a78bfa; }
+  .badge-pass { background: rgba(16,185,129,0.12); color: var(--pass); }
+
+  /* CODE BLOCK */
+  .code-wrap {
+    background: #060912;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 2rem;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1.25rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-dots { display: flex; gap: 0.4rem; }
+  .code-dots span {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .code-filename {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .code-body {
+    padding: 1.5rem 1.75rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.8;
+    color: #c9d1d9;
+  }
+  .kw  { color: #ff79c6; }
+  .type{ color: #8be9fd; }
+  .cmt { color: #6272a4; }
+  .num { color: #bd93f9; }
+  .sig { color: var(--pass); }
+
+  /* PAGE 3 — TEST CASES */
+  #testcases { background: var(--surface); }
+  .tc-list { display: flex; flex-direction: column; gap: 1.25rem; }
+  .tc-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 4px 1fr;
+  }
+  .tc-stripe { background: var(--pass); }
+  .tc-content { padding: 1.5rem 1.75rem; }
+  .tc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .tc-id {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .tc-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .tc-desc { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.75rem; line-height: 1.6; }
+  .tc-assertion {
+    background: #060912;
+    border-left: 2px solid var(--accent);
+    padding: 0.6rem 1rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: #c9d1d9;
+    border-radius: 0 3px 3px 0;
+  }
+
+  /* COVERAGE */
+  .coverage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+  .cov-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .cov-card-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; font-family: var(--mono); }
+  .cov-bar-bg { background: var(--border); border-radius: 2px; height: 4px; margin: 0.75rem 0 0.5rem; overflow: hidden; }
+  .cov-bar-fill { height: 100%; background: var(--pass); border-radius: 2px; width: 100%; }
+  .cov-pct { font-family: var(--mono); font-size: 1.4rem; font-weight: 600; color: var(--pass); }
+
+  /* PAGE 4 — RESULTS & TEAM */
+  #results { background: var(--bg); }
+  .results-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .console-box {
+    background: #060912;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .console-header {
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .console-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pass); }
+  .console-body {
+    padding: 1rem 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.9;
+    color: #8b9cb8;
+  }
+  .console-pass { color: var(--pass); }
+  .console-sep  { color: #2d3f5e; }
+  .console-hi   { color: var(--accent); }
+  .console-score{ color: var(--warn); font-weight: 600; }
+
+  .summary-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+  .summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .summary-key { font-size: 0.85rem; color: var(--muted); }
+  .summary-val { font-family: var(--mono); font-size: 0.9rem; font-weight: 600; }
+  .summary-val.green { color: var(--pass); }
+  .summary-val.blue  { color: var(--accent); }
+  .summary-val.warn  { color: var(--warn); }
+
+  /* OBSERVATIONS */
+  .obs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-top: 2.5rem;
+  }
+  .obs-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--warn);
+    border-radius: 0 6px 6px 0;
+    padding: 1.25rem 1.5rem;
+  }
+  .obs-card.info { border-left-color: var(--accent); }
+  .obs-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.4rem; }
+  .obs-text  { font-size: 0.82rem; color: var(--muted); line-height: 1.65; }
+
+  /* TEAM */
+  #team { background: var(--surface); }
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  .team-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .team-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+  .team-avatar {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display);
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: white;
+    margin: 0 auto 1rem;
+  }
+  .team-name { font-weight: 600; margin-bottom: 0.3rem; }
+  .team-id   { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); margin-bottom: 0.75rem; }
+  .team-role { font-size: 0.78rem; color: var(--accent); font-family: var(--mono); letter-spacing: 0.08em; }
+
+  /* ENV TABLE */
+  .env-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    margin-top: 2rem;
+  }
+  .env-table th {
+    text-align: left;
+    padding: 0.6rem 1.25rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+  }
+  .env-table td {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(30,45,69,0.4);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+  }
+  .env-table td:first-child { color: var(--muted); }
+  .env-table td:last-child  { color: var(--accent); }
+  .env-table tr:last-child td { border-bottom: none; }
+
+  /* FOOTER */
+  footer {
+    padding: 2.5rem 3rem;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .footer-left {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .footer-right {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .footer-right span { color: var(--pass); }
+
+  /* SCROLL INDICATOR */
+  .scroll-hint {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    animation: bounce 2s infinite;
+  }
+  .scroll-arrow {
+    width: 20px; height: 20px;
+    border-right: 1.5px solid var(--muted);
+    border-bottom: 1.5px solid var(--muted);
+    transform: rotate(45deg);
+  }
+  @keyframes bounce {
+    0%,100% { opacity: 0.5; transform: translateX(-50%) translateY(0); }
+    50% { opacity: 1; transform: translateX(-50%) translateY(5px); }
+  }
+
+  /* PULSE DOT */
+  .live-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--pass);
+    position: relative;
+    vertical-align: middle;
+    margin-right: 0.4rem;
+  }
+  .live-dot::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: rgba(16,185,129,0.3);
+    animation: pulse 1.5s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    section { padding: 4rem 1.5rem; }
+    #hero { padding: 7rem 1.5rem 3rem; }
+    .arch-grid, .results-top, .obs-grid, .team-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 1.5rem; }
+    footer { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">WDT // RTL Portfolio</div>
+  <div class="nav-links">
+    <a href="#hero">Overview</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#testcases">Verification</a>
+    <a href="#results">Results</a>
+    <a href="#team">Team</a>
+  </div>
+</nav>
+
+<!-- PAGE 1 — HERO / OVERVIEW -->
+<section id="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-eyebrow">RTL Design &amp; Functional Verification Project</div>
+
+  <h1 class="hero-title">
+    <span class="accent-word">Watchdog</span><br>
+    Timer
+  </h1>
+
+  <p class="hero-subtitle">
+    A safety-critical hardware peripheral designed in SystemVerilog at the RTL level.
+    The WDT detects software/hardware faults — flagging premature kicks,
+    asserting hardware resets on timeout, and remaining inert while disabled.
+    Verified on Cadence INCISIVE 15.2 with 100% functional coverage.
+  </p>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-value">4/4</div>
+      <div class="stat-label">Asserts Passed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">100%</div>
+      <div class="stat-label">Functional Coverage</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value blue">1035 NS</div>
+      <div class="stat-label">Simulation Time</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value blue">32-bit</div>
+      <div class="stat-label">Data Width</div>
+    </div>
+  </div>
+
+  <div class="hero-cta">
+    <a class="btn btn-primary" href="#architecture">Explore Design ↓</a>
+    <a class="btn btn-ghost" href="#results">View Results</a>
+  </div>
+
+  <!-- Team members inline on hero -->
+  <div style="margin-top:3.5rem;padding-top:2.5rem;border-top:1px solid var(--border);">
+    <div style="font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:1.25rem;">Project Team</div>
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#00d4ff);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:0.85rem;font-weight:800;color:#fff;flex-shrink:0;">AS</div>
+        <div>
+          <div style="font-size:0.85rem;font-weight:600;line-height:1.2;">Akshata V Shet</div>
+          <div style="font-family:var(--mono);font-size:0.68rem;color:var(--muted);">01FE23BEV035</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#00d4ff);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:0.85rem;font-weight:800;color:#fff;flex-shrink:0;">SJ</div>
+        <div>
+          <div style="font-size:0.85rem;font-weight:600;line-height:1.2;">Sahana S Janekunte</div>
+          <div style="font-family:var(--mono);font-size:0.68rem;color:var(--muted);">01FE23BEV027</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#00d4ff);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:0.85rem;font-weight:800;color:#fff;flex-shrink:0;">GS</div>
+        <div>
+          <div style="font-size:0.85rem;font-weight:600;line-height:1.2;">Gaurav Singh</div>
+          <div style="font-family:var(--mono);font-size:0.68rem;color:var(--muted);">01FE23BEV031</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-arrow"></div>
+    Scroll
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PAGE 2 — ARCHITECTURE -->
+<section id="architecture">
+  <div class="section-label">Page 02 — Design</div>
+  <h2 class="section-title">RTL Architecture</h2>
+  <p class="section-desc">
+    A single synchronous <code style="color:var(--accent);font-family:var(--mono);font-size:0.9em">always_ff</code> block with asynchronous active-low reset.
+    Priority-encoded logic handles timeout detection, early-kick faults, valid window kicks, and disabled-state bypass.
+  </p>
+
+  <div class="arch-grid">
+    <div class="arch-card" data-num="01">
+      <div class="arch-card-icon">⚡</div>
+      <div class="arch-card-title">Timeout Detection</div>
+      <div class="arch-card-text">When <code style="color:var(--accent);font-family:var(--mono)">count_reg ≥ timeout_val</code>, <code style="color:#a78bfa;font-family:var(--mono)">wdt_reset</code> is asserted — highest priority action, triggering a full hardware system reset pulse.</div>
+    </div>
+    <div class="arch-card" data-num="02">
+      <div class="arch-card-icon">🪟</div>
+      <div class="arch-card-title">Kick Window Logic</div>
+      <div class="arch-card-text">Kick arriving before <code style="color:var(--accent);font-family:var(--mono)">window_val</code> sets <code style="color:#a78bfa;font-family:var(--mono)">wdt_error</code> (early kick violation). A kick inside the window cleanly resets the counter — no fault.</div>
+    </div>
+    <div class="arch-card" data-num="03">
+      <div class="arch-card-icon">🔢</div>
+      <div class="arch-card-title">Free-Running Counter</div>
+      <div class="arch-card-text">When enabled with no kick and no timeout, the 32-bit counter increments every rising clock edge. Parameterised via <code style="color:var(--accent);font-family:var(--mono)">DATA_WIDTH</code> for flexible deployment.</div>
+    </div>
+    <div class="arch-card" data-num="04">
+      <div class="arch-card-icon">🔒</div>
+      <div class="arch-card-title">Disabled State Bypass</div>
+      <div class="arch-card-text">De-asserting <code style="color:var(--accent);font-family:var(--mono)">wdt_enable</code> freezes the counter at zero, clears all flags, and keeps the watchdog fully inert — no faults, no resets.</div>
+    </div>
+  </div>
+
+  <!-- Port Table -->
+  <h3 style="font-family:var(--display);font-size:1.3rem;font-weight:700;margin-bottom:1rem;margin-top:2.5rem;">Module Interface — <code style="font-family:var(--mono);font-size:0.9em;color:var(--accent)">watchdog_timer #(DATA_WIDTH=32)</code></h3>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+    <table class="port-table">
+      <thead>
+        <tr>
+          <th>Port</th>
+          <th>Dir</th>
+          <th>Width</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>clk</td><td><span class="badge badge-in">IN</span></td><td>1</td><td style="color:var(--muted)">System clock — 100 MHz</td></tr>
+        <tr><td>rst_n</td><td><span class="badge badge-in">IN</span></td><td>1</td><td style="color:var(--muted)">Active-low asynchronous reset</td></tr>
+        <tr><td>wdt_enable</td><td><span class="badge badge-in">IN</span></td><td>1</td><td style="color:var(--muted)">Enables watchdog operation</td></tr>
+        <tr><td>wdt_kick</td><td><span class="badge badge-in">IN</span></td><td>1</td><td style="color:var(--muted)">Software kick / refresh signal</td></tr>
+        <tr><td>timeout_val</td><td><span class="badge badge-in">IN</span></td><td>32</td><td style="color:var(--muted)">Timeout threshold in clock cycles</td></tr>
+        <tr><td>window_val</td><td><span class="badge badge-in">IN</span></td><td>32</td><td style="color:var(--muted)">Window-open threshold</td></tr>
+        <tr><td>wdt_reset</td><td><span class="badge badge-out">OUT</span></td><td>1</td><td style="color:var(--muted)">System reset pulse on timeout</td></tr>
+        <tr><td>wdt_error</td><td><span class="badge badge-out">OUT</span></td><td>1</td><td style="color:var(--muted)">Error flag for early kick violation</td></tr>
+        <tr><td>current_count</td><td><span class="badge badge-out">OUT</span></td><td>32</td><td style="color:var(--muted)">Live value of internal counter</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- RTL Snippet -->
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span class="code-filename">rrttll.sv — always_ff core</span>
+    </div>
+    <div class="code-body">
+<span class="kw">always_ff</span> @(<span class="sig">posedge</span> clk <span class="kw">or</span> <span class="sig">negedge</span> rst_n) <span class="kw">begin</span><br>
+&nbsp;&nbsp;<span class="kw">if</span> (!rst_n) <span class="kw">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;count_reg &lt;= <span class="num">'0</span>;&nbsp;&nbsp;reset_reg &lt;= <span class="num">1'b0</span>;&nbsp;&nbsp;error_reg &lt;= <span class="num">1'b0</span>;<br>
+&nbsp;&nbsp;<span class="kw">end else if</span> (wdt_enable) <span class="kw">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (count_reg &gt;= timeout_val)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reset_reg &lt;= <span class="num">1'b1</span>; <span class="cmt">// Timeout expiry — highest priority</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">else if</span> (wdt_kick) <span class="kw">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (count_reg &lt; window_val)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error_reg &lt;= <span class="num">1'b1</span>; <span class="cmt">// Early kick infraction</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count_reg &lt;= <span class="num">'0</span>; <span class="cmt">// Reset counter in both cases</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">end else</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count_reg &lt;= count_reg + <span class="num">1'b1</span>; <span class="cmt">// Normal increment</span><br>
+&nbsp;&nbsp;<span class="kw">end else begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;count_reg &lt;= <span class="num">'0</span>;&nbsp;&nbsp;reset_reg &lt;= <span class="num">1'b0</span>;&nbsp;&nbsp;error_reg &lt;= <span class="num">1'b0</span>; <span class="cmt">// Disabled</span><br>
+&nbsp;&nbsp;<span class="kw">end</span><br>
+<span class="kw">end</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PAGE 3 — VERIFICATION / TEST CASES -->
+<section id="testcases">
+  <div class="section-label">Page 03 — Verification</div>
+  <h2 class="section-title">Testbench &amp; Test Cases</h2>
+  <p class="section-desc">
+    Four structured test cases cover all operational modes of the WDT. The testbench runs on Cadence INCISIVE 15.2 with <code style="color:var(--accent);font-family:var(--mono);font-size:0.9em">timeout_val = 40</code> cycles and <code style="color:var(--accent);font-family:var(--mono);font-size:0.9em">window_val = 15</code>.
+    A <code style="color:var(--accent);font-family:var(--mono);font-size:0.9em">refresh_system_reset()</code> task isolates each test case from state leakage.
+  </p>
+
+  <div class="tc-list">
+    <div class="tc-item">
+      <div class="tc-stripe"></div>
+      <div class="tc-content">
+        <div class="tc-header">
+          <div class="tc-id">TC-01</div>
+          <span class="badge badge-pass">✓ PASS</span>
+        </div>
+        <div class="tc-title">Normal Operation — Valid Window Kick</div>
+        <div class="tc-desc">WDT is enabled. Wait 25 cycles (beyond window_val = 15), then assert kick for 1 cycle. Counter must reset to 0 cleanly; no error or reset signal should be raised. Counter snapshot reported as 1 due to one-cycle pipeline latency — assertion correctly accepts <code style="font-family:var(--mono);color:var(--accent)">count == 0 || count == 1</code>.</div>
+        <div class="tc-assertion">if (current_count == 0 || current_count == 1)<br>&nbsp;&nbsp;$display("[ASSERT PASS] Counter reset cleanly inside open window.");</div>
+      </div>
+    </div>
+
+    <div class="tc-item">
+      <div class="tc-stripe"></div>
+      <div class="tc-content">
+        <div class="tc-header">
+          <div class="tc-id">TC-02</div>
+          <span class="badge badge-pass">✓ PASS</span>
+        </div>
+        <div class="tc-title">Fault Injection — Early Kick Violation</div>
+        <div class="tc-desc">After TC1, wait only 5 cycles (count &lt; window_val = 15) before asserting kick. The WDT should detect the premature kick and assert <code style="font-family:var(--mono);color:var(--accent)">wdt_error</code> as a protocol violation flag.</div>
+        <div class="tc-assertion">if (wdt_error)<br>&nbsp;&nbsp;$display("[ASSERT PASS] Watchdog early kick violation flagged successfully!");</div>
+      </div>
+    </div>
+
+    <div class="tc-item">
+      <div class="tc-stripe"></div>
+      <div class="tc-content">
+        <div class="tc-header">
+          <div class="tc-id">TC-03</div>
+          <span class="badge badge-pass">✓ PASS</span>
+        </div>
+        <div class="tc-title">Fault Injection — Timeout Expiration / Hardware Reset</div>
+        <div class="tc-desc">Enable WDT, wait 45 clock cycles without issuing any kick (timeout_val = 40). The watchdog must assert <code style="font-family:var(--mono);color:var(--accent)">wdt_reset</code> after cycle 40, triggering a simulated hardware system reset pulse.</div>
+        <div class="tc-assertion">if (wdt_reset)<br>&nbsp;&nbsp;$display("[ASSERT PASS] Watchdog timed out successfully! Hardware reset asserted.");</div>
+      </div>
+    </div>
+
+    <div class="tc-item">
+      <div class="tc-stripe"></div>
+      <div class="tc-content">
+        <div class="tc-header">
+          <div class="tc-id">TC-04</div>
+          <span class="badge badge-pass">✓ PASS</span>
+        </div>
+        <div class="tc-title">Disabled State — Counter Bypass Verification</div>
+        <div class="tc-desc">De-assert <code style="font-family:var(--mono);color:var(--accent)">wdt_enable</code>, issue a kick, and wait 8 cycles. The counter must remain frozen at zero; no faults or resets should be generated. Confirms the WDT is fully inert when disabled.</div>
+        <div class="tc-assertion">if (current_count == 0)<br>&nbsp;&nbsp;$display("[ASSERT PASS] Watchdog counter stayed locked at 0 while disabled.");</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coverage -->
+  <h3 style="font-family:var(--display);font-size:1.3rem;font-weight:700;margin-top:3rem;margin-bottom:0.5rem;">Functional Coverage Model</h3>
+  <p style="color:var(--muted);font-size:0.875rem;margin-bottom:0;">Covergroup <code style="color:var(--accent);font-family:var(--mono)">wdt_coverage_cg</code> sampled at every positive clock edge.</p>
+  <div class="coverage-grid">
+    <div class="cov-card">
+      <div class="cov-card-label">cp_enable</div>
+      <div class="cov-pct">100%</div>
+      <div class="cov-bar-bg"><div class="cov-bar-fill"></div></div>
+      <div style="font-size:0.72rem;color:var(--muted);font-family:var(--mono)">enabled + disabled bins hit</div>
+    </div>
+    <div class="cov-card">
+      <div class="cov-card-label">cp_kick</div>
+      <div class="cov-pct">100%</div>
+      <div class="cov-bar-bg"><div class="cov-bar-fill"></div></div>
+      <div style="font-size:0.72rem;color:var(--muted);font-family:var(--mono)">kicked + not_kicked bins hit</div>
+    </div>
+    <div class="cov-card">
+      <div class="cov-card-label">cp_error</div>
+      <div class="cov-pct">100%</div>
+      <div class="cov-bar-bg"><div class="cov-bar-fill"></div></div>
+      <div style="font-size:0.72rem;color:var(--muted);font-family:var(--mono)">error_triggered bin hit — TC2</div>
+    </div>
+    <div class="cov-card">
+      <div class="cov-card-label">cp_reset</div>
+      <div class="cov-pct">100%</div>
+      <div class="cov-bar-bg"><div class="cov-bar-fill"></div></div>
+      <div style="font-size:0.72rem;color:var(--muted);font-family:var(--mono)">reset_triggered bin hit — TC3</div>
+    </div>
+    <div class="cov-card">
+      <div class="cov-card-label">cross_window_kick</div>
+      <div class="cov-pct">100%</div>
+      <div class="cov-bar-bg"><div class="cov-bar-fill"></div></div>
+      <div style="font-size:0.72rem;color:var(--muted);font-family:var(--mono)">both cross bins covered</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PAGE 4 — RESULTS & OBSERVATIONS -->
+<section id="results">
+  <div class="section-label">Page 04 — Results</div>
+  <h2 class="section-title">Simulation Results</h2>
+  <p class="section-desc">
+    All four test cases passed with zero failures. Simulation completed at 1035 NS on Cadence INCISIVE 15.2 (ncsim) with functional coverage reported at 100.00% by <code style="color:var(--accent);font-family:var(--mono);font-size:0.9em">wdt_coverage_cg</code>.
+  </p>
+
+  <div class="results-top">
+    <!-- Console -->
+    <div class="console-box">
+      <div class="console-header">
+        <div class="console-dot"></div>
+        ncsim — simulation log
+      </div>
+      <div class="console-body">
+        <span class="console-hi">&gt;&gt;&gt; Testcase 1: Normal Operation &gt;&gt;&gt;</span><br>
+        <span style="color:#6b7db3">[INFO] Normal Kick processed. Counter snapshot: 1</span><br>
+        <span class="console-pass">[ASSERT PASS] Counter reset cleanly inside open window.</span><br><br>
+        <span class="console-hi">&gt;&gt;&gt; Testcase 2: Fault Injection (Early Kick) &gt;&gt;&gt;</span><br>
+        <span class="console-pass">[ASSERT PASS] Watchdog early kick violation flagged!</span><br><br>
+        <span class="console-hi">&gt;&gt;&gt; Testcase 3: Fault Injection (Expire) &gt;&gt;&gt;</span><br>
+        <span class="console-pass">[ASSERT PASS] Watchdog timed out! Hardware reset asserted.</span><br><br>
+        <span class="console-hi">&gt;&gt;&gt; Testcase 4: Disabled State &gt;&gt;&gt;</span><br>
+        <span class="console-pass">[ASSERT PASS] Counter stayed locked at 0 while disabled.</span><br><br>
+        <span class="console-sep">========================================</span><br>
+        <span style="color:var(--text);font-weight:600;">FINAL BEHAVIORAL RESULTS REPORT CARD</span><br>
+        <span class="console-sep">========================================</span><br>
+        TOTAL PASSED ASSERTS: <span class="console-pass">4</span><br>
+        TOTAL FAILED ASSERTS: <span class="console-pass">0</span><br>
+        FUNCTIONAL COVERAGE: <span class="console-score">100.00%</span><br>
+        <span class="console-sep">========================================</span><br>
+        <span style="color:#6b7db3">Simulation complete via $finish(1) at 1035 NS</span>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-box">
+      <div style="font-family:var(--display);font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Run Summary</div>
+      <div class="summary-row">
+        <span class="summary-key">Simulator</span>
+        <span class="summary-val blue">Cadence INCISIVE 15.2</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">SV Standard</span>
+        <span class="summary-val blue">IEEE 1800-2009</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">PDK / Tech Library</span>
+        <span class="summary-val blue">ASAP7 ssc7p5t_05</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Clock Period</span>
+        <span class="summary-val blue">10 ns (100 MHz)</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">timeout_val</span>
+        <span class="summary-val blue">40 cycles</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">window_val</span>
+        <span class="summary-val blue">15 cycles</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Sim End Time</span>
+        <span class="summary-val warn">1035 NS</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Asserts Passed</span>
+        <span class="summary-val green">4 / 4</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Coverage Score</span>
+        <span class="summary-val green">100.00%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Observations -->
+  <h3 style="font-family:var(--display);font-size:1.3rem;font-weight:700;margin-top:3rem;margin-bottom:0.25rem;">Design Observations</h3>
+  <p style="color:var(--muted);font-size:0.875rem;">Noted for the next design iteration.</p>
+  <div class="obs-grid">
+    <div class="obs-card">
+      <div class="obs-title">Early Kick Counter Clear Behaviour</div>
+      <div class="obs-text">On early kick violation, the counter is currently cleared even though a fault is flagged. Depending on system intent, it may be preferable to let the counter continue running so the timeout still expires unless a system reset is issued. Design decision to clarify with architect.</div>
+    </div>
+    <div class="obs-card">
+      <div class="obs-title">Sticky Fault Registers</div>
+      <div class="obs-text"><code style="font-family:var(--mono);color:var(--accent);font-size:0.9em">error_reg</code> and <code style="font-family:var(--mono);color:var(--accent);font-size:0.9em">reset_reg</code> are only cleared on <code style="font-family:var(--mono);color:var(--accent);font-size:0.9em">rst_n</code> or disable. For production SoC integration, a write-to-clear register interface is recommended.</div>
+    </div>
+    <div class="obs-card info">
+      <div class="obs-title">No Metastability Guards</div>
+      <div class="obs-text"><code style="font-family:var(--mono);color:var(--accent);font-size:0.9em">wdt_kick</code> and <code style="font-family:var(--mono);color:var(--accent);font-size:0.9em">wdt_enable</code> are used directly without synchronizer flops. If driven from a different clock domain or asynchronous software context, two-flop synchronizers should be added at the input boundary.</div>
+    </div>
+    <div class="obs-card info">
+      <div class="obs-title">Coverage Boundary Conditions</div>
+      <div class="obs-text">Future stimulus to complete boundary coverage: kick exactly at <code style="font-family:var(--mono);color:var(--accent);font-size:0.9em">window_val</code>, kick at <code style="font-family:var(--mono);color:var(--accent);font-size:0.9em">timeout_val - 1</code>, toggling <code style="font-family:var(--mono);color:var(--accent);font-size:0.9em">wdt_enable</code> mid-count, and dynamically changing <code style="font-family:var(--mono);color:var(--accent);font-size:0.9em">timeout_val</code> during operation.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TEAM -->
+<section id="team">
+  <div class="section-label">Team</div>
+  <h2 class="section-title">Project Members</h2>
+  <p class="section-desc">B.E. VLSI / ECE — Functional Verification Lab, CICS7 University Server.</p>
+  <div class="team-grid">
+    <div class="team-card">
+      <div class="team-avatar">AS</div>
+      <div class="team-name">Akshata V Shet</div>
+      <div class="team-id">01FE23BEV035</div>
+      <div class="team-role">RTL Design · Testbench</div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">SJ</div>
+      <div class="team-name">Sahana S Janekunte</div>
+      <div class="team-id">01FE23BEV027</div>
+      <div class="team-role">Verification · Coverage</div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">GS</div>
+      <div class="team-name">Gaurav Singh</div>
+      <div class="team-id">01FE23BEV031</div>
+      <div class="team-role">Simulation · Analysis</div>
+    </div>
+  </div>
+
+  <!-- Env Table -->
+  <h3 style="font-family:var(--display);font-size:1.2rem;font-weight:700;margin-top:3rem;margin-bottom:0.5rem;">Simulation Environment</h3>
+  <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+    <table class="env-table">
+      <thead>
+        <tr><th>Item</th><th>Detail</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Simulator</td><td>Cadence INCISIVE 15.2 (ncsim)</td></tr>
+        <tr><td>SystemVerilog Standard</td><td>IEEE 1800-2009</td></tr>
+        <tr><td>PDK / Tech Library</td><td>ASAP7 (asap7ssc7p5t_05)</td></tr>
+        <tr><td>Worklib Snapshot</td><td>worklib.tb_top:sv</td></tr>
+        <tr><td>Simulation End Time</td><td>1035 NS</td></tr>
+        <tr><td>Coverage Database</td><td>./cov_work/scope/icc_5454f40d_2805fe7e</td></tr>
+        <tr><td>Working Directory</td><td>~/Svv cp — CICS7 University Server</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <span style="color:var(--accent)">WDT RTL Portfolio</span> — B.E. VLSI Functional Verification Project<br>
+    Cadence INCISIVE 15.2 · IEEE 1800-2009 · ASAP7 PDK
+  </div>
+  <div class="footer-right">
+    <div class="live-dot"></div>
+    <span>4/4 Asserts</span> · Functional Coverage <span>100%</span>
+  </div>
+</footer>
+
+<script>
+  // Smooth scroll spy for nav
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('.nav-links a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.style.color = '');
+        const active = document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
+        if (active) active.style.color = 'var(--accent)';
+      }
+    });
+  }, { threshold: 0.4 });
+  sections.forEach(s => obs.observe(s));
+
+  // Animate coverage bars on scroll
+  const bars = document.querySelectorAll('.cov-bar-fill');
+  const barObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.transition = 'width 1s ease';
+        e.target.style.width = '100%';
+      }
+    });
+  }, { threshold: 0.5 });
+  bars.forEach(b => { b.style.width = '0'; barObs.observe(b); });
+</script>
+</body>
+</html>
